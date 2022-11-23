@@ -1,0 +1,14 @@
+{% extends 'drawingdoc/base.html' %}
+
+{% block heads %}
+<title>Nazwa budynku</title>
+{% endblock %}
+
+{% block content %}
+<form id="contact" action="" method="post">
+    {% csrf_token %}
+    {{ form }}
+    <input type="submit" value="Submit">
+</form>
+
+{% endblock %}

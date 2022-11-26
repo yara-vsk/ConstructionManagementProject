@@ -11,12 +11,27 @@ class BuildingName(models.Model):
         return self.name
 
 
+class Project(models.Model):
+    name = models.CharField(max_length=200)
+    abbreviation = models.CharField(max_length=3)
+
+    def __str__(self):
+        return self.name
+
+
+class DrawingFile(models.Model):
+    file_field = models.FileField(upload_to='uploads/')
+
+    def __str__(self):
+        return self.title
+
+
 class Drawing(models.Model):
 
     class DesignStage(models.TextChoices):
         ds1 = 'PK', _('PROJEKT KONCEPCYJNY')
         ds2 = 'PB', _('PROJEKT BUDOWLANY')
-        ds3 = 'PW.', _('PROJEKT WYKONAWCZY')
+        ds3 = 'PW', _('PROJEKT WYKONAWCZY')
 
     class Branch(models.TextChoices):
         b1 = 'A', _('Architektura')
@@ -33,6 +48,10 @@ class Drawing(models.Model):
     draw_title = models.CharField(max_length=200)
     building_name = models.ForeignKey(BuildingName, on_delete=models.CASCADE)
     revision = models.CharField(max_length=3)
+    file = models.ForeignKey(DrawingFile, on_delete=models.CASCADE)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.id
+        return self.file
+
+

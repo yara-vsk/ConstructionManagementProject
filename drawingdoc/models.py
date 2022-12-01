@@ -22,16 +22,14 @@ class Project(models.Model):
 class DrawingFile(models.Model):
     file_field = models.FileField(upload_to='uploads/')
 
-    def __str__(self):
-        return self.title
 
 
 class Drawing(models.Model):
 
     class DesignStage(models.TextChoices):
-        ds1 = 'PK', _('PROJEKT KONCEPCYJNY')
-        ds2 = 'PB', _('PROJEKT BUDOWLANY')
-        ds3 = 'PW', _('PROJEKT WYKONAWCZY')
+        ds1 = 'PK', _('Projekt wykonawczy')
+        ds2 = 'PB', _('Projekt budowlany')
+        ds3 = 'PW', _('Projekt koncepcyjny')
 
     class Branch(models.TextChoices):
         b1 = 'A', _('Architektura')
@@ -40,7 +38,7 @@ class Drawing(models.Model):
         b4 = 'IS', _('Instalacje sanitarne')
         b5 = 'D', _('Drogi')
 
-    design_stage = models.CharField(max_length=3,choices=DesignStage.choices, default=DesignStage.ds3)
+    design_stage = models.CharField(max_length=3,choices=DesignStage.choices, default=DesignStage.ds1)
     branch = models.CharField(max_length=3,choices=Branch.choices, default=Branch.b1)
     date_drawing = models.DateField()
     date_update = models.DateField()

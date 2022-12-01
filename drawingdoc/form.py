@@ -30,3 +30,21 @@ class UploadDrawingForm(ModelForm):
             'file_field' : forms.ClearableFileInput(attrs={'multiple': True})
         }
 
+
+class DrawingsSearchForm(forms.ModelForm):
+
+    building_name = forms.ModelMultipleChoiceField(
+        queryset=BuildingName.objects.all(),
+        widget=forms.CheckboxSelectMultiple,
+    )
+    date_from = forms.DateField(required=False)
+    date_to = forms.DateField(required=False)
+
+
+    class Meta:
+        model = Drawing
+        fields = ('draw_number','design_stage','branch',)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['draw_number'].required = False

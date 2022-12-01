@@ -1,0 +1,50 @@
+{% extends 'drawingdoc/base.html' %}
+
+{% block heads %}
+<title>Nazwa budynku</title>
+{% endblock %}
+{% block content %}
+
+<form method="get" action="">
+  {{form.as_p}}
+  <button type="submit">search</button>
+</form>
+<br>
+{% if object_dict %}
+<table border="1">
+	<caption>Drawing documentation</caption>
+	<thead>
+	  <tr>
+		<th>Draw number</th>
+		<th>Draw title</th>
+		{% for rev in revision_list %}
+
+		<th>Revision {{ rev }}</th>
+		{% endfor %}
+	  </tr>
+	</thead>
+	<tbody>
+
+	{% for number, object in object_dict.items %}
+	  <tr>
+		<td>{{ object.obj.draw_number }}</td>
+		<td>{{ object.obj.draw_title|default:" "  }}</td>
+		{% for rev in revision_list %}
+		  {% for rev_date in object.rev_date %}
+			{% if rev == rev_date.revision %}
+		  		<td>{{ rev_date.date_drawing }}</td>
+		  	{% endif %}
+
+		  {% endfor %}
+		{% endfor %}
+	  </tr>
+	  {% empty %}
+	  <tr>
+		<td colspan="5">no items</td>
+	  </tr>
+	{% endfor %}
+	</tbody>
+</table>
+{% endif %}
+
+{% endblock %}

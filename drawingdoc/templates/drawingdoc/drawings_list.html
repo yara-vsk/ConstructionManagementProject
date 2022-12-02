@@ -1,7 +1,7 @@
 {% extends 'drawingdoc/base.html' %}
 
 {% block heads %}
-<title>Nazwa budynku</title>
+<title>List drawings</title>
 {% endblock %}
 {% block content %}
 
@@ -32,7 +32,7 @@
 		{% for rev in revision_list %}
 		  {% for rev_date in object.rev_date %}
 			{% if rev == rev_date.revision %}
-		  		<td>{{ rev_date.date_drawing }}</td>
+		  		<td><a href='../{{ rev_date.id }}'>{{ rev_date.date_drawing|date:"d/m/Y" }}</a></td>
 		  	{% endif %}
 
 		  {% endfor %}

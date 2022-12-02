@@ -21,15 +21,18 @@ class Project(models.Model):
 
 class DrawingFile(models.Model):
     file_field = models.FileField(upload_to='uploads/')
+    file_name = models.CharField(max_length=40, unique=True)
 
+    def __str__(self):
+        return self.file_name
 
 
 class Drawing(models.Model):
 
     class DesignStage(models.TextChoices):
-        ds1 = 'PK', _('Projekt wykonawczy')
+        ds1 = 'PW', _('Projekt wykonawczy')
         ds2 = 'PB', _('Projekt budowlany')
-        ds3 = 'PW', _('Projekt koncepcyjny')
+        ds3 = 'PK', _('Projekt koncepcyjny')
 
     class Branch(models.TextChoices):
         b1 = 'A', _('Architektura')

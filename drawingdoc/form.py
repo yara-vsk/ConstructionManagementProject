@@ -36,6 +36,7 @@ class DrawingsSearchForm(forms.ModelForm):
     building_name = forms.ModelMultipleChoiceField(
         queryset=BuildingName.objects.all(),
         widget=forms.CheckboxSelectMultiple,
+        required=False,
     )
     date_from = forms.DateField(required=False)
     date_to = forms.DateField(required=False)
@@ -48,3 +49,5 @@ class DrawingsSearchForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['draw_number'].required = False
+        self.fields['design_stage'].required = False
+        self.fields['branch'].required = False

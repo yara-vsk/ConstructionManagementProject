@@ -1,0 +1,46 @@
+{% extends 'drawingdoc/base.html' %}
+
+{% block heads %}
+<title>List drawings</title>
+{% endblock %}
+{% block content %}
+
+<br>
+
+<table border="1">
+	<thead>
+	  <tr>
+		  <th>Design stage</th>
+		  <th>Branch</th>
+		  <th>Building name</th>
+		  <th>Draw number</th>
+		  <th>Revision</th>
+		  <th>Date_drawing</th>
+		  <th>Draw title</th>
+	  </tr>
+	</thead>
+	<tbody>
+	  <tr>
+		  <td>{{ obj.design_stage }}</td>
+		  <td>{{ obj.branch }}</td>
+		  <td>{{ obj.building_name }}</td>
+		  <td>{{ obj.draw_number }}</td>
+		  <td>{{ obj.revision }}</td>
+		  <td>{{ obj.date_drawing|date:"d/m/Y" }}</td>
+		  <td>{{ obj.draw_title|default:" "  }}</td>
+	  </tr>
+	</tbody>
+</table>
+<br>
+<table border="1">
+	<tbody>
+	  <tr>
+		  <td><a href="delete/">Delete</a></td>
+		  <td>{{ file }}</td>
+		  <td>{{ obj.building_name }}</td>
+
+	  </tr>
+	</tbody>
+</table>
+
+{% endblock %}

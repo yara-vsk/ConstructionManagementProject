@@ -1,0 +1,15 @@
+{% extends 'drawingdoc/base.html' %}
+
+{% block heads %}
+<title>Delete Drawing</title>
+{% endblock %}
+
+{% block content %}
+<h1>Confirm removing "{{object.file.file_name}} "</h1>
+<form method="post" action="">
+  {% csrf_token %}
+  {{form.as_p}}
+  <button type="submit">delete</button>
+</form>
+
+{% endblock %}

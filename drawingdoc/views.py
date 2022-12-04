@@ -1,7 +1,9 @@
+import os
+
 from django.shortcuts import render, redirect
 from django.views.generic import CreateView, ListView, View
 from .form import BuildingNameForm, DrawingForm, UploadDrawingForm, ProjectForm, DrawingsSearchForm
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, Http404
 from .models import DrawingFile, Drawing, BuildingName, Project
 from .drawingsnamechecker import drawings_name_checker, files_checker
 from datetime import datetime
@@ -37,7 +39,6 @@ class UploadDrawingView(View):
 
     def get(self, request, *args, **kwargs):
         form = self.form_class()
-        print(kwargs, '________E___')
         return render(request, self.template_name, {'form': form})
 
     def post(self, request, *args, **kwargs):
@@ -122,3 +123,30 @@ class DrawingsListView(View):
                           'object_dict': object_dict,
                           'revision_list': revision_list,
                       })
+
+
+class DrawingInfoView(View):
+    template_name = 'drawingdoc/drawing_info.html'
+
+    def get(self, request, *args, **kwargs):
+        try:
+            drawing_data = Drawing.objects.get(id=kwargs['pk'])
+        except Drawing.DoesNotExist:
+            raise Http404("Drawing does not exist")
+        return render(request, self.template_name, {'obj': drawing_data})
+
+
+class DrawingDeleteView(View):
+    template_name = 'drawingdoc/generic_delete.html'
+
+    def get(self, request, *args, **kwargs):
+        try:
+            drawing_data = Drawing.objects.get(id=kwargs['pk'])
+            file_url = str(drawing_data.file.file_field.path)
+            drawing_data.file.delete()
+            if os.path.isfile(file_url):
+                print(file_url)
+                os.remove(file_url)
+        except Drawing.DoesNotExist:
+            raise Http404("Drawing does not exist")
+        return HttpResponseRedirect(f'/project/{kwargs["pk_p"]}/drawing_documents/list/')

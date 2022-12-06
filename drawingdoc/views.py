@@ -5,7 +5,8 @@ from django.views.generic import CreateView, ListView, View
 from .form import BuildingNameForm, DrawingForm, UploadDrawingForm, ProjectForm, DrawingsSearchForm
 from django.http import HttpResponseRedirect, Http404
 from .models import DrawingFile, Drawing, BuildingName, Project
-from .drawingsnamechecker import drawings_name_checker, files_checker
+from .drawingsnamechecker import drawings_name_checker
+from .fileschecker import  files_checker
 from datetime import datetime
 from django.db.models.functions import Concat
 from django.db.models import CharField, Value as V
@@ -110,18 +111,22 @@ class DrawingsListView(View):
                     drawing_number_list.append(rev_numb[1])
 
             for dr_number in drawing_number_list:
+                all_rev=[]
+                for revision_val in queryset.filter(draw_number=dr_number).values_list('revision'):
+                    all_rev.append(revision_val[0])
                 object_dict[dr_number] = {
                     'obj': queryset.filter(draw_number=dr_number).values('design_stage', 'branch', 'date_drawing',
                                                                          'draw_number', 'draw_title', 'building_name',
                                                                          'revision').first(),
                     'rev_date': queryset.filter(draw_number=dr_number).values('revision', 'date_drawing','id'),
+                    'all_rev': all_rev,
                 }
-
+            revision_list.sort()
         return render(request, self.template_name,
                       {
                           'form': form,
                           'object_dict': object_dict,
-                          'revision_list': revision_list,
+                          'revision_list': revision_list
                       })
 
 
@@ -137,7 +142,6 @@ class DrawingInfoView(View):
 
 
 class DrawingDeleteView(View):
-    template_name = 'drawingdoc/generic_delete.html'
 
     def get(self, request, *args, **kwargs):
         try:

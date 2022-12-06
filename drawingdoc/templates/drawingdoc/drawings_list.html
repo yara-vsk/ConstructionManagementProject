@@ -30,12 +30,15 @@
 		<td>{{ object.obj.draw_number }}</td>
 		<td>{{ object.obj.draw_title|default:" "  }}</td>
 		{% for rev in revision_list %}
-		  {% for rev_date in object.rev_date %}
-			{% if rev == rev_date.revision %}
-		  		<td><a href='../{{ rev_date.id }}'>{{ rev_date.date_drawing|date:"d/m/Y" }}</a></td>
-		  	{% endif %}
-
-		  {% endfor %}
+		  {% if rev in object.all_rev %}
+			  {% for rev_date in object.rev_date %}
+					{% if rev == rev_date.revision %}
+						<td><a href='../{{ rev_date.id }}'>{{ rev_date.date_drawing|date:"d/m/Y" }}</a></td>
+					{% endif %}
+			  {% endfor %}
+		  {% else %}
+		  	<td></td>
+		  {% endif %}
 		{% endfor %}
 	  </tr>
 	  {% empty %}

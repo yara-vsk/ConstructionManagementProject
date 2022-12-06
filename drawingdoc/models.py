@@ -1,5 +1,8 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from .drawingsnamechecker import drawings_name_checker
+
+
 # Create your models here.
 
 
@@ -19,8 +22,16 @@ class Project(models.Model):
         return self.name
 
 
+def directory_path(instance, filename):
+    drawing_data = drawings_name_checker(filename)
+    return 'uploads/{project}/{stage}/{branch}/{name}'.format(project=drawing_data['project'],
+                                                              stage=drawing_data['design_stage'],
+                                                              branch=drawing_data['branch'],
+                                                              name=filename)
+
+
 class DrawingFile(models.Model):
-    file_field = models.FileField(upload_to='uploads/')
+    file_field = models.FileField(upload_to=directory_path)
     file_name = models.CharField(max_length=40, unique=True)
 
     def __str__(self):
@@ -28,7 +39,6 @@ class DrawingFile(models.Model):
 
 
 class Drawing(models.Model):
-
     class DesignStage(models.TextChoices):
         ds1 = 'PW', _('Projekt wykonawczy')
         ds2 = 'PB', _('Projekt budowlany')
@@ -41,8 +51,8 @@ class Drawing(models.Model):
         b4 = 'IS', _('Instalacje sanitarne')
         b5 = 'D', _('Drogi')
 
-    design_stage = models.CharField(max_length=3,choices=DesignStage.choices, default=DesignStage.ds1)
-    branch = models.CharField(max_length=3,choices=Branch.choices, default=Branch.b1)
+    design_stage = models.CharField(max_length=3, choices=DesignStage.choices, default=DesignStage.ds1)
+    branch = models.CharField(max_length=3, choices=Branch.choices, default=Branch.b1)
     date_drawing = models.DateField()
     date_update = models.DateField()
     draw_number = models.CharField(max_length=10)
@@ -54,5 +64,3 @@ class Drawing(models.Model):
 
     def __str__(self):
         return self.file
-
-

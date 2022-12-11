@@ -1,0 +1,41 @@
+{% extends 'drawingdoc/base.html' %}
+
+{% block heads %}
+<title>Project {{project.name}}</title>
+{% endblock %}
+
+
+{% block content %}
+<br>
+<h3><b>{{project.name}}</b></h3>
+<h4><a href="drawing_documents/list/">Drawing documents list</a></h4>
+<h4><a href="drawing_documents/upload/">Upload drawings</a></h4>
+<h4><a href="new_building_name/">Create new building name</a></h4>
+
+<table border="1">
+	<caption>Building name list</caption>
+	<thead>
+	  <tr>
+		  <th>Building name</th>
+		  <th>Abbreviation</th>
+		  <th>Action</th>
+	  </tr>
+	</thead>
+	<tbody>
+
+	{% for obj in building_list %}
+	  <tr>
+		  <td>{{ obj.name }}</td>
+		  <td>{{ obj.abbreviation }}</td>
+		  <td><a href="building_name/{{obj.id}}/update/">Update</a> <a href="building_name/{{obj.id}}/delete/">Delete</a></td>
+	  </tr>
+	  {% empty %}
+	  <tr>
+		<td colspan="5">no items</td>
+	  </tr>
+	{% endfor %}
+	</tbody>
+</table>
+
+
+{% endblock %}

@@ -17,10 +17,12 @@ from django.contrib import admin
 from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path, include
+from django.views.generic.base import RedirectView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('project/<int:pk_p>/drawing_documents/', include('drawingdoc.urls')),
+    path('project/', include('drawingdoc.urls'), name='project list'),
+    path('', RedirectView.as_view(url='project/')),
 ]
 
 if settings.DEBUG:

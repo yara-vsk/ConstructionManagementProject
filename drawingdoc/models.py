@@ -6,7 +6,7 @@ from .drawingsnamechecker import drawings_name_checker
 # Create your models here.
 
 
-class BuildingName(models.Model):
+class Project(models.Model):
     name = models.CharField(max_length=200)
     abbreviation = models.CharField(max_length=3)
 
@@ -14,9 +14,10 @@ class BuildingName(models.Model):
         return self.name
 
 
-class Project(models.Model):
+class BuildingName(models.Model):
     name = models.CharField(max_length=200)
     abbreviation = models.CharField(max_length=3)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name

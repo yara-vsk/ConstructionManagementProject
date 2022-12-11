@@ -1,0 +1,34 @@
+{% extends 'drawingdoc/base.html' %}
+
+{% block heads %}
+<title>Project list</title>
+{% endblock %}
+
+
+{% block content %}
+<br>
+
+<table border="1">
+	<thead>
+	  <tr>
+		<th>Project name</th>
+		<th>Abbreviation</th>
+	  </tr>
+	</thead>
+	<tbody>
+
+	{% for obj in object_list %}
+	  <tr>
+		<td><a href="../{{obj.id}}/">{{ obj.name }}</a></td>
+		<td>{{ obj.abbreviation }}</td>
+	  </tr>
+	  {% empty %}
+	  <tr>
+		<td colspan="5">no items</td>
+	  </tr>
+	{% endfor %}
+	</tbody>
+</table>
+
+
+{% endblock %}

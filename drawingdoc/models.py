@@ -7,16 +7,16 @@ from .drawingsnamechecker import drawings_name_checker
 
 
 class Project(models.Model):
-    name = models.CharField(max_length=200)
-    abbreviation = models.CharField(max_length=3)
+    name = models.CharField(max_length=200, unique=True)
+    abbreviation = models.CharField(max_length=3, unique=True)
 
     def __str__(self):
         return self.name
 
 
 class BuildingName(models.Model):
-    name = models.CharField(max_length=200)
-    abbreviation = models.CharField(max_length=3)
+    name = models.CharField(max_length=200, unique=True)
+    abbreviation = models.CharField(max_length=3, unique=True)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -25,10 +25,12 @@ class BuildingName(models.Model):
 
 def directory_path(instance, filename):
     drawing_data = drawings_name_checker(filename)
-    return 'uploads/{project}/{stage}/{branch}/{name}'.format(project=drawing_data['project'],
-                                                              stage=drawing_data['design_stage'],
-                                                              branch=drawing_data['branch'],
-                                                              name=filename)
+    return 'uploads/{project}/{stage}/{branch}/{building_name}/{name}'.format(project=drawing_data['project'],
+                                                                              stage=drawing_data['design_stage'],
+                                                                              branch=drawing_data['branch'],
+                                                                              building_name=drawing_data[
+                                                                                  'building_name'],
+                                                                              name=filename)
 
 
 class DrawingFile(models.Model):

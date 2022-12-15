@@ -1,7 +1,9 @@
 from django import forms
+from django.core.exceptions import ValidationError
 from django.forms import ModelForm
 from django.utils.translation import gettext_lazy as _
 from .models import Drawing, BuildingName, DrawingFile, Project
+import re
 
 
 class BuildingNameForm(ModelForm):
@@ -9,11 +11,23 @@ class BuildingNameForm(ModelForm):
         model = BuildingName
         fields=['name','abbreviation']
 
+    def clean_abbreviation(self):
+        abbreviation = self.cleaned_data['abbreviation']
+        if not re.match(r'^[A-Z0-9]{1,3}$',abbreviation):
+            raise ValidationError('The abbreviation can only contain uppercase letters or numbers')
+        return abbreviation
+
 
 class ProjectForm(ModelForm):
     class Meta:
         model = Project
-        fields=['name','abbreviation',]
+        fields=['name','abbreviation']
+
+    def clean_abbreviation(self):
+        abbreviation = self.cleaned_data['abbreviation']
+        if not re.match(r'^[A-Z0-9]{1,3}$',abbreviation):
+            raise ValidationError('The abbreviation can only contain uppercase letters or numbers')
+        return abbreviation
 
 
 class UploadDrawingForm(ModelForm):

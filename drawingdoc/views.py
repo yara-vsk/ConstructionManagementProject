@@ -1,6 +1,7 @@
 import os
-from django.shortcuts import render, redirect
-from django.views.generic import CreateView, View, ListView
+from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse_lazy
+from django.views.generic import CreateView, View, ListView, DeleteView, UpdateView
 from .form import BuildingNameForm, UploadDrawingForm, ProjectForm, DrawingsSearchForm
 from django.http import HttpResponseRedirect, Http404
 from .models import DrawingFile, Drawing, BuildingName, Project
@@ -20,24 +21,57 @@ class ProjectListView(ListView):
             **kwargs)
 
 
-class ProjectInfoView(ListView):
+class ProjectInfoView(View):
     template_name = 'drawingdoc/project_info.html'
 
+    def get(self, request, *args, **kwargs):
+        project = get_object_or_404(Project, pk=kwargs['pk_p'])
+        building_names=BuildingName.objects.filter(project=project.id).all()
+        return render(request, self.template_name, {'project': project, 'building_list':building_names})
+
+
+class NewBuildingName(View):
+    form_class = BuildingNameForm
+    template_name = 'drawingdoc/newbuildingname.html'
 
     def get(self, request, *args, **kwargs):
+        form = self.form_class()
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request, *args, **kwargs):
         try:
             project = Project.objects.get(id=kwargs['pk_p'])
         except Project.DoesNotExist:
             raise Http404("Project does not exist")
-        building_names=BuildingName.objects.filter(project=project.id).all()
-        print(building_names)
-        return render(request, self.template_name, {'project': project, 'building_list':building_names})
+        form = self.form_class(request.POST)
+        if form.is_valid():
+            building_name=BuildingName(
+                name=form.cleaned_data['name'],
+                abbreviation=form.cleaned_data['abbreviation'].upper(),
+                project=project,
+            )
+            building_name.save()
+            return HttpResponseRedirect(reverse_lazy('project:project-info', kwargs={"pk_p":kwargs["pk_p"]}))
+        return render(request, self.template_name, {'form': form})
 
 
-class NewBuildingName(CreateView):
+class BuildingNameDeleteView(DeleteView):
+    model = BuildingName
+    pk_url_kwarg = "pk_bn"
+    template_name = 'drawingdoc/generic_delete.html'
+
+    def get_success_url(self):
+        return reverse_lazy('project:project-info', kwargs={"pk_p": self.kwargs["pk_p"]})
+
+
+class BuildingNameUpdateView(UpdateView):
     form_class = BuildingNameForm
+    model = BuildingName
+    pk_url_kwarg = "pk_bn"
     template_name = 'drawingdoc/newbuildingname.html'
-    success_url = '/'
+
+    def get_success_url(self):
+        return reverse_lazy('project:project-info', kwargs={"pk_p":self.kwargs["pk_p"]})
 
 
 class NewProjectView(CreateView):
@@ -83,7 +117,7 @@ class UploadDrawingView(View):
                     )
                     drawing_file.save()
                     drawing.save()
-                return HttpResponseRedirect('/success/')
+                return HttpResponseRedirect(reverse_lazy('project:project-info', kwargs={"pk_p":kwargs["pk_p"]}))
             for error in list_of_errors:
                 form.add_error('file_field', error)
             form.add_error('file_field', 'No file has been saved, please correct the above errors')
@@ -169,11 +203,10 @@ class DrawingDeleteView(View):
             file_url = str(drawing.file.file_field.path)
             drawing.file.delete()
             if os.path.isfile(file_url):
-                print(file_url)
                 os.remove(file_url)
         except Drawing.DoesNotExist:
             raise Http404("Drawing does not exist")
-        return HttpResponseRedirect(f'/project/{kwargs["pk_p"]}/drawing_documents/list/')
+        return HttpResponseRedirect(reverse_lazy('project:drawing-document-list',kwargs={"pk_p": kwargs["pk_p"]}))
 
 
 class DrawingUpdateView(View):
@@ -203,7 +236,8 @@ class DrawingUpdateView(View):
                         os.remove(file_url)
                     drawing_file.file_field=files[0]
                     drawing_file.save(update_fields=['file_field'])
-                    return HttpResponseRedirect('/success/')
+                    return HttpResponseRedirect(reverse_lazy('project:drawing-document-info',
+                                                             kwargs={"pk_p": kwargs["pk_p"], "pk": drawing.id}))
                 form.add_error('file_field', f'The file name"{files[0].name}" does not match the drawing being updated.')
                 form.clean()
                 return render(request, self.template_name, {'form': form})

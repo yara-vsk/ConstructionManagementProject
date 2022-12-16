@@ -16,6 +16,7 @@
 	<thead>
 	  <tr>
 		<th>Draw number</th>
+		<th>Building<br>abbreviation</br></th>
 		<th>Draw title</th>
 		{% for rev in revision_list %}
 
@@ -28,6 +29,7 @@
 	{% for number, object in object_dict.items %}
 	  <tr>
 		<td>{{ object.obj.draw_number }}</td>
+		<td>{{ object.obj.building_name__abbreviation }}</td>
 		<td>{{ object.obj.draw_title|default:" "  }}</td>
 		{% for rev in revision_list %}
 		  {% if rev in object.all_rev %}

@@ -18,11 +18,13 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path, include
 from django.views.generic.base import RedirectView
+from drawingdoc.views import HomeView
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('project/', include(('drawingdoc.urls','project'), namespace='project')),
-    path('', RedirectView.as_view(url='project/')),
+    path('', HomeView.as_view()),
 ]
 
 if settings.DEBUG:

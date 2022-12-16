@@ -1,7 +1,11 @@
 import os
+import shutil
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, View, ListView, DeleteView, UpdateView
+
+from ConstrManagementProject.settings import BASE_DIR
 from .form import BuildingNameForm, UploadDrawingForm, ProjectForm, DrawingsSearchForm
 from django.http import HttpResponseRedirect, Http404
 from .models import DrawingFile, Drawing, BuildingName, Project
@@ -55,13 +59,19 @@ class NewBuildingName(View):
         return render(request, self.template_name, {'form': form})
 
 
-class BuildingNameDeleteView(DeleteView):
-    model = BuildingName
-    pk_url_kwarg = "pk_bn"
-    template_name = 'drawingdoc/generic_delete.html'
+class BuildingNameDeleteView(View):
 
-    def get_success_url(self):
-        return reverse_lazy('project:project-info', kwargs={"pk_p": self.kwargs["pk_p"]})
+    def get(self, request, *args, **kwargs):
+        project = get_object_or_404(Project, pk=kwargs['pk_p'])
+        building_name = get_object_or_404(BuildingName, pk=kwargs['pk_bn'])
+        drawing_list = Drawing.objects.filter(building_name=building_name,project=project)
+        for drawing in drawing_list:
+            file_url = str(drawing.file.file_field.path)
+            drawing.file.delete()
+            if os.path.isfile(file_url):
+                os.remove(file_url)
+        building_name.delete()
+        return HttpResponseRedirect(reverse_lazy('project:project-info', kwargs={"pk_p": self.kwargs["pk_p"]}))
 
 
 class BuildingNameUpdateView(UpdateView):
@@ -133,11 +143,11 @@ class DrawingsListView(View):
         revision_list = []
         object_dict = {}
         drawing_number_list = []
-        form = DrawingsSearchForm(request.GET)
         try:
             project = Project.objects.get(id=kwargs['pk_p'])
         except Project.DoesNotExist:
             raise Http404("Project does not exist")
+        form = DrawingsSearchForm(request.GET, project.id)
         if form.is_valid():
             design_stage = form.cleaned_data.get('design_stage', '').strip()
             draw_number = form.cleaned_data.get('draw_number', '').strip()
@@ -170,7 +180,8 @@ class DrawingsListView(View):
                 object_dict[dr_number] = {
                     'obj': queryset.filter(draw_number=dr_number).values('design_stage', 'branch', 'file__file_field',
                                                                          'date_drawing',
-                                                                         'draw_number', 'draw_title', 'building_name',
+                                                                         'draw_number', 'draw_title',
+                                                                         'building_name__abbreviation',
                                                                          'revision').first(),
                     'rev_date': queryset.filter(draw_number=dr_number).values('revision', 'date_drawing', 'id'),
                     'all_rev': all_rev,
@@ -247,3 +258,29 @@ class DrawingUpdateView(View):
             form.clean()
             return render(request, self.template_name, {'form': form})
         return render(request, self.template_name, {'form': form})
+
+
+class HomeView(ListView):
+    template_name = 'drawingdoc/home.html'
+
+    def get(self, request, *args, **kwargs):
+        return render(request, self.template_name)
+
+
+class ProjectDeleteView(DeleteView):
+    template_name = 'drawingdoc/generic_delete.html'
+    model = Project
+    pk_url_kwarg = "pk_p"
+
+    def get(self, request, *args, **kwargs):
+        project = get_object_or_404(Project, pk=kwargs['pk_p'])
+        file_url = os.path.join(BASE_DIR, 'media/uploads/'+str(project.abbreviation))
+
+        drawing_list = Drawing.objects.filter(project=project)
+        for drawing in drawing_list:
+            drawing.file.delete()
+
+        if os.path.isdir(file_url):
+            shutil.rmtree(file_url)
+        project.delete()
+        return HttpResponseRedirect(reverse_lazy('project:project-list'))

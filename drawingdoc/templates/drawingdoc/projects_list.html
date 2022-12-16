@@ -19,7 +19,7 @@
 
 	{% for obj in object_list %}
 	  <tr>
-		<td><a href="../{{obj.id}}/">{{ obj.name }}</a></td>
+		<td><a href='{% url "project:project-info" obj.id %}'>{{ obj.name }}</a></td>
 		<td>{{ obj.abbreviation }}</td>
 	  </tr>
 	  {% empty %}

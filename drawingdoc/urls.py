@@ -3,18 +3,18 @@ from django.views.generic import RedirectView
 
 from .views import NewBuildingName, UploadDrawingView, NewProjectView, DrawingsListView, DrawingInfoView, \
     DrawingDeleteView, DrawingUpdateView, ProjectListView, ProjectInfoView, BuildingNameDeleteView,\
-    BuildingNameUpdateView
+    BuildingNameUpdateView, ProjectDeleteView
 
-from .models import Drawing
 
 
 urlpatterns = [
     path('', RedirectView.as_view(url='list/')),
-    path('new/', NewProjectView.as_view()),
+    path('new/', NewProjectView.as_view(), name='project-new'),
     path('list/', ProjectListView.as_view(), name='project-list'),
     path('<int:pk_p>/', ProjectInfoView.as_view(), name='project-info'),
-    path('<int:pk_p>/building_name/<int:pk_bn>/delete/', BuildingNameDeleteView.as_view()),
-    path('<int:pk_p>/building_name/<int:pk_bn>/update/', BuildingNameUpdateView.as_view()),
+    path('<int:pk_p>/delete', ProjectDeleteView.as_view(), name='project-delete'),
+    path('<int:pk_p>/building_name/<int:pk_bn>/delete/', BuildingNameDeleteView.as_view(),name='building-name-delete'),
+    path('<int:pk_p>/building_name/<int:pk_bn>/update/', BuildingNameUpdateView.as_view(),name='building-name-update'),
     path('<int:pk_p>/new_building_name/', NewBuildingName.as_view()),
     path('<int:pk_p>/drawing_documents/upload/', UploadDrawingView.as_view()),
     path('<int:pk_p>/drawing_documents/list/', DrawingsListView.as_view(),name='drawing-document-list'),

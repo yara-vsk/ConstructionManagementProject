@@ -59,3 +59,10 @@ class DrawingsSearchForm(forms.ModelForm):
         self.fields['draw_number'].required = False
         self.fields['design_stage'].required = False
         self.fields['branch'].required = False
+        self.fields['building_name'].queryset = BuildingName.objects.filter(project=args[1]).order_by('name')
+
+
+
+
+
+

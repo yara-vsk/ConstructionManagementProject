@@ -27,7 +27,8 @@
 	  <tr>
 		  <td>{{ obj.name }}</td>
 		  <td>{{ obj.abbreviation }}</td>
-		  <td><a href="building_name/{{obj.id}}/update/">Update</a> <a href="building_name/{{obj.id}}/delete/">Delete</a></td>
+		  <td><a href='{% url "project:building-name-update" obj.project.id obj.id %}'>Update</a>
+			  <a href='{% url "project:building-name-delete" obj.project.id obj.id %}'>Delete</a></td>
 	  </tr>
 	  {% empty %}
 	  <tr>
@@ -36,6 +37,7 @@
 	{% endfor %}
 	</tbody>
 </table>
-
+<br>
+<h4><a href='{% url "project:project-delete" project.id %}'>Delete project</a></h4>
 
 {% endblock %}

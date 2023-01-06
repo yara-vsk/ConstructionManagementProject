@@ -3,10 +3,10 @@
 {% block heads %}
 <title>List drawings</title>
 {% endblock %}
+
+
 {% block content %}
-
 <br>
-
 <table border="1">
 	<thead>
 	  <tr>
@@ -31,6 +31,9 @@
 	  </tr>
 	</tbody>
 </table>
+
+<br>
+<iframe src="{{obj.file.file_field.url}}/"  frameborder="0"></iframe>
 <br>
 <table border="1">
 	<tbody>
@@ -42,5 +45,7 @@
 	  </tr>
 	</tbody>
 </table>
+
+
 
 {% endblock %}

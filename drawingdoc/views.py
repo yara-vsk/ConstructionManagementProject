@@ -7,7 +7,7 @@ from django.views.generic import CreateView, View, ListView, DeleteView, UpdateV
 
 from ConstrManagementProject.settings import BASE_DIR
 from .form import BuildingNameForm, UploadDrawingForm, ProjectForm, DrawingsSearchForm
-from django.http import HttpResponseRedirect, Http404
+from django.http import HttpResponseRedirect, Http404, FileResponse
 from .models import DrawingFile, Drawing, BuildingName, Project
 from .drawingsnamechecker import drawings_name_checker
 from .fileschecker import files_checker
@@ -284,3 +284,4 @@ class ProjectDeleteView(DeleteView):
             shutil.rmtree(file_url)
         project.delete()
         return HttpResponseRedirect(reverse_lazy('project:project-list'))
+

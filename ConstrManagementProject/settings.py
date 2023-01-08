@@ -137,3 +137,13 @@ load_dotenv()
 RECAPTCHA_PUBLIC_KEY = os.getenv("rECAPTCHA_PUBLIC_KEY")
 RECAPTCHA_PRIVATE_KEY = os.getenv("rECAPTCHA_PRIVATE_KEY")
 
+# Emailing settings
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = os.getenv("eMAIL_HOST")
+EMAIL_FROM = os.getenv("eMAIL_FROM")
+EMAIL_HOST_USER = os.getenv("eMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.getenv("eMAIL_HOST_PASSWORD")
+EMAIL_PORT = os.getenv("eMAIL_PORT")
+EMAIL_USE_TLS = True
+
+PASSWORD_RESET_TIMEOUT = 14400

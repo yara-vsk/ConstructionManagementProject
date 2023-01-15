@@ -12,11 +12,13 @@ from .models import DrawingFile, Drawing, BuildingName, Project
 from .drawingsnamechecker import drawings_name_checker
 from .fileschecker import files_checker
 from datetime import datetime
+from django.contrib.auth.mixins import PermissionRequiredMixin
 
 
-class ProjectListView(ListView):
+class ProjectListView(PermissionRequiredMixin, ListView):
     model = Project
     template_name = 'drawingdoc/projects_list.html'
+    permission_required = 'drawingdoc.view_project'
 
     def get_context_data(self, *, object_list=None, **kwargs):
         queryset = object_list if object_list is not None else self.object_list
@@ -25,8 +27,9 @@ class ProjectListView(ListView):
             **kwargs)
 
 
-class ProjectInfoView(View):
+class ProjectInfoView(PermissionRequiredMixin, View):
     template_name = 'drawingdoc/project_info.html'
+    permission_required = 'drawingdoc.view_project'
 
     def get(self, request, *args, **kwargs):
         project = get_object_or_404(Project, pk=kwargs['pk_p'])
@@ -34,9 +37,11 @@ class ProjectInfoView(View):
         return render(request, self.template_name, {'project': project, 'building_list':building_names})
 
 
-class NewBuildingName(View):
+class NewBuildingName(PermissionRequiredMixin, View):
     form_class = BuildingNameForm
     template_name = 'drawingdoc/newbuildingname.html'
+    permission_required = 'drawingdoc.add_buildingname'
+
 
     def get(self, request, *args, **kwargs):
         form = self.form_class()
@@ -59,7 +64,8 @@ class NewBuildingName(View):
         return render(request, self.template_name, {'form': form})
 
 
-class BuildingNameDeleteView(View):
+class BuildingNameDeleteView(PermissionRequiredMixin, View):
+    permission_required = 'drawingdoc.delete_buildingname'
 
     def get(self, request, *args, **kwargs):
         project = get_object_or_404(Project, pk=kwargs['pk_p'])
@@ -74,25 +80,28 @@ class BuildingNameDeleteView(View):
         return HttpResponseRedirect(reverse_lazy('project:project-info', kwargs={"pk_p": self.kwargs["pk_p"]}))
 
 
-class BuildingNameUpdateView(UpdateView):
+class BuildingNameUpdateView(PermissionRequiredMixin, UpdateView):
     form_class = BuildingNameForm
     model = BuildingName
     pk_url_kwarg = "pk_bn"
     template_name = 'drawingdoc/newbuildingname.html'
+    permission_required = 'drawingdoc.change_buildingname'
 
     def get_success_url(self):
         return reverse_lazy('project:project-info', kwargs={"pk_p":self.kwargs["pk_p"]})
 
 
-class NewProjectView(CreateView):
+class NewProjectView(PermissionRequiredMixin, CreateView):
     form_class = ProjectForm
     template_name = 'drawingdoc/newbuildingname.html'
     success_url = '/'
+    permission_required = 'drawingdoc.add_project'
 
 
-class UploadDrawingView(View):
+class UploadDrawingView(PermissionRequiredMixin, View):
     form_class = UploadDrawingForm
     template_name = 'drawingdoc/uploaddrawing.html'
+    permission_required = 'drawingdoc.add_drawing'
 
     def get(self, request, *args, **kwargs):
         form = self.form_class()
@@ -136,8 +145,9 @@ class UploadDrawingView(View):
         return render(request, self.template_name, {'form': form})
 
 
-class DrawingsListView(View):
+class DrawingsListView(PermissionRequiredMixin, View):
     template_name = 'drawingdoc/drawings_list.html'
+    permission_required = 'drawingdoc.view_drawing'
 
     def get(self, request, *args, **kwargs):
         revision_list = []
@@ -195,8 +205,9 @@ class DrawingsListView(View):
                       })
 
 
-class DrawingInfoView(View):
+class DrawingInfoView(PermissionRequiredMixin, View):
     template_name = 'drawingdoc/drawing_info.html'
+    permission_required = 'drawingdoc.view_drawing'
 
     def get(self, request, *args, **kwargs):
         try:
@@ -206,7 +217,8 @@ class DrawingInfoView(View):
         return render(request, self.template_name, {'obj': drawing_data})
 
 
-class DrawingDeleteView(View):
+class DrawingDeleteView(PermissionRequiredMixin, View):
+    permission_required = 'drawingdoc.delete_drawing'
 
     def get(self, request, *args, **kwargs):
         try:
@@ -220,9 +232,11 @@ class DrawingDeleteView(View):
         return HttpResponseRedirect(reverse_lazy('project:drawing-document-list',kwargs={"pk_p": kwargs["pk_p"]}))
 
 
-class DrawingUpdateView(View):
+class DrawingUpdateView(PermissionRequiredMixin, View):
     form_class = UploadDrawingForm
     template_name = 'drawingdoc/uploaddrawing.html'
+    permission_required = ('drawingdoc.change_drawing', 'drawingdoc.add_drawingfile',
+                           'drawingdoc.change_drawingfile','drawingdoc.delete_drawingfile')
 
     def get(self, request, *args, **kwargs):
         form = self.form_class()
@@ -267,10 +281,11 @@ class HomeView(ListView):
         return render(request, self.template_name)
 
 
-class ProjectDeleteView(DeleteView):
+class ProjectDeleteView(PermissionRequiredMixin, DeleteView):
     template_name = 'drawingdoc/generic_delete.html'
     model = Project
     pk_url_kwarg = "pk_p"
+    permission_required = 'drawingdoc.delete_project'
 
     def get(self, request, *args, **kwargs):
         project = get_object_or_404(Project, pk=kwargs['pk_p'])

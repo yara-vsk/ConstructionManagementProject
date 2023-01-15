@@ -1,5 +1,6 @@
 from django.core.exceptions import ImproperlyConfigured
 from django.shortcuts import redirect
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 
 class UserAuthenticatingMixin:
@@ -34,3 +35,5 @@ class UserAuthenticatingMixin:
         if not test_result:
             return redirect(self.get_redirect_url())
         return super().dispatch(request, *args, **kwargs)
+
+

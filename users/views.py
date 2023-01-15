@@ -9,11 +9,12 @@ from django.template.loader import render_to_string
 from django.urls import reverse_lazy
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.views import View
 
 from .custommixins import UserAuthenticatingMixin
 from .tokens import account_activation_token
 from .form import UserRegistrationForm, CustomAuthenticationForm
-from django.views import View
+from .permissions import status_permision
 
 
 # Create your views here.
@@ -28,6 +29,7 @@ def activate(request, uidb64, token):
 
     if user is not None and account_activation_token.check_token(user,token):
         user.is_active = True
+        user.user_permissions.set(status_permision[user.status])
         user.save()
         return redirect('login')
     return redirect('registration')
@@ -47,10 +49,9 @@ def activate_email(request, user, to_email):
         'protocol': 'https' if request.is_secure() else 'http'
     })
     email = EmailMessage(mail_subject, message, to=[to_email])
-    print("emmmmmm")
     if email.send():
-        print("send_EMMMMM")
-
+        pass
+        #print("email send")
 
 
 class RegisterUserView(UserAuthenticatingMixin, View):

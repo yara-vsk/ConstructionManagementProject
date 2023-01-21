@@ -1,12 +1,13 @@
 {% extends 'drawingdoc/base.html' %}
-
+{% load static %}
 {% block heads %}
 <title>List drawings</title>
 {% endblock %}
 
 
 {% block content %}
-<br>
+<h3>Drawing {{ obj.file.file_name }}</h3>
+
 <table border="1">
 	<thead>
 	  <tr>

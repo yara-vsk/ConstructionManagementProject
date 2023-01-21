@@ -9,9 +9,9 @@ class CustomUser(AbstractUser):
 
     class Status(models.TextChoices):
         s1 = 'AR', _('Architekt')
-        s2 = 'IN', _('Inwestor')
+        s2 = 'INW', _('Inwestor')
         s3 = 'GW', _('Generalny Wykonawca')
-
+        s4 = 'INI', _('Inspektor Nadzoru Inwestorskiego')
 
     email = models.EmailField(unique=True)
     status = models.CharField(max_length=100, choices=Status.choices, default=Status.s2)

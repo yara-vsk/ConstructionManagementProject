@@ -6,7 +6,7 @@
 
 
 {% block content %}
-<br>
+<h3>Project list</h3>
 
 <table border="1">
 	<thead>
@@ -19,8 +19,8 @@
 
 	{% for obj in object_list %}
 	  <tr>
-		<td><a href='{% url "project:project-info" obj.id %}'>{{ obj.name }}</a></td>
-		<td>{{ obj.abbreviation }}</td>
+		<td><a href='{% url "project:project-info" obj.project.id %}'>{{ obj.project.name }}</a></td>
+		<td>{{ obj.project.abbreviation }}</td>
 	  </tr>
 	  {% empty %}
 	  <tr>

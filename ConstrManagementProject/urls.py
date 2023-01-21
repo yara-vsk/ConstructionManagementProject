@@ -16,9 +16,10 @@ Including another URLconf
 from django.contrib import admin
 from django.conf import settings
 from django.conf.urls.static import static
+from django.template.defaulttags import url
 
-from django.urls import path, include
-from drawingdoc.views import HomeView
+from django.urls import path, include, re_path
+from drawingdoc.views import HomeView, media_access
 
 
 urlpatterns = [
@@ -26,6 +27,7 @@ urlpatterns = [
     path('project/', include(('drawingdoc.urls','project'), namespace='project')),
     path('', HomeView.as_view()),
     path('', include('users.urls')),
+    re_path(r'^media/(?P<path>.*)', media_access, name='media')
 ]
 
 if settings.DEBUG:

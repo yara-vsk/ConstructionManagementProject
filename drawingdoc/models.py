@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from .drawingsnamechecker import drawings_name_checker
@@ -9,9 +10,23 @@ from .drawingsnamechecker import drawings_name_checker
 class Project(models.Model):
     name = models.CharField(max_length=200, unique=True)
     abbreviation = models.CharField(max_length=3, unique=True)
+    creator = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name
+
+
+class MemberOfProject(models.Model):
+
+    class Status(models.TextChoices):
+        s1 = 'AR', _('Architekt')
+        s2 = 'INW', _('Inwestor')
+        s3 = 'GW', _('Generalny Wykonawca')
+        s4 = 'INI', _('Inspektor Nadzoru')
+
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    status_user_perms = models.CharField(max_length=100, choices=Status.choices, default=Status.s1)
 
 
 class BuildingName(models.Model):

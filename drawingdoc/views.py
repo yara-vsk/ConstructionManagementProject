@@ -1,47 +1,48 @@
 import os
 import shutil
 
+from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, View, ListView, DeleteView, UpdateView
 
-from ConstrManagementProject.settings import BASE_DIR
-from .form import BuildingNameForm, UploadDrawingForm, ProjectForm, DrawingsSearchForm
+from ConstrManagementProject.settings import BASE_DIR, MEDIA_ROOT
+from .custommixins import CustomPermMixin
+from .form import BuildingNameForm, UploadDrawingForm, ProjectForm, DrawingsSearchForm, MembersOfProjectForm
 from django.http import HttpResponseRedirect, Http404, FileResponse
-from .models import DrawingFile, Drawing, BuildingName, Project
+from .models import DrawingFile, Drawing, BuildingName, Project, MemberOfProject
 from .drawingsnamechecker import drawings_name_checker
 from .fileschecker import files_checker
 from datetime import datetime
-from django.contrib.auth.mixins import PermissionRequiredMixin
 
 
-class ProjectListView(PermissionRequiredMixin, ListView):
-    model = Project
+class ProjectListView(CustomPermMixin, View):
     template_name = 'drawingdoc/projects_list.html'
     permission_required = 'drawingdoc.view_project'
 
-    def get_context_data(self, *, object_list=None, **kwargs):
-        queryset = object_list if object_list is not None else self.object_list
-        return super().get_context_data(
-            object_list=queryset,
-            **kwargs)
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        user_projects = MemberOfProject.objects.filter(user=user).all()
+        return render(request, self.template_name, {'object_list': user_projects})
 
 
-class ProjectInfoView(PermissionRequiredMixin, View):
+class ProjectInfoView(CustomPermMixin, View):
     template_name = 'drawingdoc/project_info.html'
     permission_required = 'drawingdoc.view_project'
 
     def get(self, request, *args, **kwargs):
         project = get_object_or_404(Project, pk=kwargs['pk_p'])
-        building_names=BuildingName.objects.filter(project=project.id).all()
-        return render(request, self.template_name, {'project': project, 'building_list':building_names})
+        building_names = BuildingName.objects.filter(project=project.id).all()
+        return render(request, self.template_name, {'project': project, 'building_list': building_names})
 
 
-class NewBuildingName(PermissionRequiredMixin, View):
+class NewBuildingName(CustomPermMixin, View):
     form_class = BuildingNameForm
     template_name = 'drawingdoc/newbuildingname.html'
     permission_required = 'drawingdoc.add_buildingname'
-
 
     def get(self, request, *args, **kwargs):
         form = self.form_class()
@@ -54,23 +55,23 @@ class NewBuildingName(PermissionRequiredMixin, View):
             raise Http404("Project does not exist")
         form = self.form_class(request.POST)
         if form.is_valid():
-            building_name=BuildingName(
+            building_name = BuildingName(
                 name=form.cleaned_data['name'],
                 abbreviation=form.cleaned_data['abbreviation'].upper(),
                 project=project,
             )
             building_name.save()
-            return HttpResponseRedirect(reverse_lazy('project:project-info', kwargs={"pk_p":kwargs["pk_p"]}))
+            return HttpResponseRedirect(reverse_lazy('project:project-info', kwargs={"pk_p": kwargs["pk_p"]}))
         return render(request, self.template_name, {'form': form})
 
 
-class BuildingNameDeleteView(PermissionRequiredMixin, View):
+class BuildingNameDeleteView(CustomPermMixin, View):
     permission_required = 'drawingdoc.delete_buildingname'
 
     def get(self, request, *args, **kwargs):
         project = get_object_or_404(Project, pk=kwargs['pk_p'])
         building_name = get_object_or_404(BuildingName, pk=kwargs['pk_bn'])
-        drawing_list = Drawing.objects.filter(building_name=building_name,project=project)
+        drawing_list = Drawing.objects.filter(building_name=building_name, project=project)
         for drawing in drawing_list:
             file_url = str(drawing.file.file_field.path)
             drawing.file.delete()
@@ -80,7 +81,7 @@ class BuildingNameDeleteView(PermissionRequiredMixin, View):
         return HttpResponseRedirect(reverse_lazy('project:project-info', kwargs={"pk_p": self.kwargs["pk_p"]}))
 
 
-class BuildingNameUpdateView(PermissionRequiredMixin, UpdateView):
+class BuildingNameUpdateView(CustomPermMixin, UpdateView):
     form_class = BuildingNameForm
     model = BuildingName
     pk_url_kwarg = "pk_bn"
@@ -88,17 +89,110 @@ class BuildingNameUpdateView(PermissionRequiredMixin, UpdateView):
     permission_required = 'drawingdoc.change_buildingname'
 
     def get_success_url(self):
-        return reverse_lazy('project:project-info', kwargs={"pk_p":self.kwargs["pk_p"]})
+        return reverse_lazy('project:project-info', kwargs={"pk_p": self.kwargs["pk_p"]})
 
 
-class NewProjectView(PermissionRequiredMixin, CreateView):
+class NewProjectView(CustomPermMixin, View):
     form_class = ProjectForm
     template_name = 'drawingdoc/newbuildingname.html'
-    success_url = '/'
     permission_required = 'drawingdoc.add_project'
 
+    def get(self, request, *args, **kwargs):
+        form = self.form_class()
+        return render(request, self.template_name, {'form': form})
 
-class UploadDrawingView(PermissionRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(request.POST)
+        if form.is_valid():
+            project = Project(
+                name=form.cleaned_data['name'],
+                abbreviation=form.cleaned_data['abbreviation'].upper(),
+                creator=get_user_model().objects.get(id=request.user.id),
+            )
+            project.save()
+            content_type = ContentType.objects.get_for_model(Project)
+            permission = Permission.objects.create(
+                codename='project_'+str(project.id),
+                name='Can use project with id='+str(project.id),
+                content_type=content_type,
+            )
+            permission.save()
+            user=request.user
+            user.user_permissions.add(permission)
+            user.save()
+            member_of_project = MemberOfProject(
+                user=user,
+                project=project
+            )
+            member_of_project.save()
+            return HttpResponseRedirect(reverse_lazy('project:project-list'))
+        return render(request, self.template_name, {'form': form})
+
+
+class AddUserToProjectView(CustomPermMixin, View):
+    form_class = MembersOfProjectForm
+    template_name = 'drawingdoc/newbuildingname.html'
+    permission_required = 'drawingdoc.add_memberofproject'
+
+    def get(self, request, *args, **kwargs):
+        project = get_object_or_404(Project, pk=kwargs['pk_p'])
+        form = self.form_class()
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request, *args, **kwargs):
+        project = get_object_or_404(Project, pk=kwargs['pk_p'])
+        form = self.form_class(request.POST)
+        if form.is_valid():
+            user = get_user_model().objects.get(email=form.cleaned_data['email'])
+            if MemberOfProject.objects.filter(user=user,project=project):
+                form.add_error('email', 'The user is already a member of the project')
+                form.clean()
+                return render(request, self.template_name, {'form': form})
+            member_of_project = MemberOfProject(
+                user=user,
+                status_user_perms = form.cleaned_data['status_user_perms'],
+                project=project,
+            )
+            member_of_project.save()
+            permission = Permission.objects.get(
+                codename='project_'+str(project.id),
+                content_type=ContentType.objects.get_for_model(Project),
+            )
+            user.user_permissions.add(permission)
+            user.save()
+            return HttpResponseRedirect(reverse_lazy('project:members',kwargs={"pk_p": self.kwargs["pk_p"]}))
+        return render(request, self.template_name, {'form': form})
+
+
+class MemberOfProjectListView(CustomPermMixin, View):
+    template_name = 'drawingdoc/members_of_project_list.html'
+    permission_required = 'drawingdoc.add_memberofproject'
+
+    def get(self, request, *args, **kwargs):
+        project = get_object_or_404(Project, pk=kwargs['pk_p'])
+        members_of_project = MemberOfProject.objects.filter(project=project)
+        return render(request, self.template_name, context={'members_of_project':members_of_project, 'project':project})
+
+
+class MemberOfProjectDeleteView(CustomPermMixin, View):
+
+    permission_required = 'drawingdoc.delete_memberofproject'
+
+    def get(self, request, *args, **kwargs):
+        project = get_object_or_404(Project, pk=kwargs['pk_p'])
+        members_of_project = get_object_or_404(MemberOfProject, pk=kwargs['pk_m'])
+        user = request.user
+        permission = Permission.objects.get(
+            codename='project_' + str(project.id),
+            content_type=ContentType.objects.get_for_model(Project),
+        )
+        members_of_project.delete()
+        user.user_permissions.remove(permission)
+        user.save()
+        return HttpResponseRedirect(reverse_lazy('project:members', kwargs={"pk_p": kwargs["pk_p"]}))
+
+
+class UploadDrawingView(CustomPermMixin, View):
     form_class = UploadDrawingForm
     template_name = 'drawingdoc/uploaddrawing.html'
     permission_required = 'drawingdoc.add_drawing'
@@ -136,7 +230,7 @@ class UploadDrawingView(PermissionRequiredMixin, View):
                     )
                     drawing_file.save()
                     drawing.save()
-                return HttpResponseRedirect(reverse_lazy('project:project-info', kwargs={"pk_p":kwargs["pk_p"]}))
+                return HttpResponseRedirect(reverse_lazy('project:project-info', kwargs={"pk_p": kwargs["pk_p"]}))
             for error in list_of_errors:
                 form.add_error('file_field', error)
             form.add_error('file_field', 'No file has been saved, please correct the above errors')
@@ -145,7 +239,7 @@ class UploadDrawingView(PermissionRequiredMixin, View):
         return render(request, self.template_name, {'form': form})
 
 
-class DrawingsListView(PermissionRequiredMixin, View):
+class DrawingsListView(CustomPermMixin, View):
     template_name = 'drawingdoc/drawings_list.html'
     permission_required = 'drawingdoc.view_drawing'
 
@@ -205,7 +299,7 @@ class DrawingsListView(PermissionRequiredMixin, View):
                       })
 
 
-class DrawingInfoView(PermissionRequiredMixin, View):
+class DrawingInfoView(CustomPermMixin, View):
     template_name = 'drawingdoc/drawing_info.html'
     permission_required = 'drawingdoc.view_drawing'
 
@@ -217,26 +311,26 @@ class DrawingInfoView(PermissionRequiredMixin, View):
         return render(request, self.template_name, {'obj': drawing_data})
 
 
-class DrawingDeleteView(PermissionRequiredMixin, View):
+class DrawingDeleteView(CustomPermMixin, View):
     permission_required = 'drawingdoc.delete_drawing'
 
     def get(self, request, *args, **kwargs):
         try:
-            drawing= Drawing.objects.get(id=kwargs['pk'])
+            drawing = Drawing.objects.get(id=kwargs['pk'])
             file_url = str(drawing.file.file_field.path)
             drawing.file.delete()
             if os.path.isfile(file_url):
                 os.remove(file_url)
         except Drawing.DoesNotExist:
             raise Http404("Drawing does not exist")
-        return HttpResponseRedirect(reverse_lazy('project:drawing-document-list',kwargs={"pk_p": kwargs["pk_p"]}))
+        return HttpResponseRedirect(reverse_lazy('project:drawing-document-list', kwargs={"pk_p": kwargs["pk_p"]}))
 
 
-class DrawingUpdateView(PermissionRequiredMixin, View):
+class DrawingUpdateView(CustomPermMixin, View):
     form_class = UploadDrawingForm
     template_name = 'drawingdoc/uploaddrawing.html'
     permission_required = ('drawingdoc.change_drawing', 'drawingdoc.add_drawingfile',
-                           'drawingdoc.change_drawingfile','drawingdoc.delete_drawingfile')
+                           'drawingdoc.change_drawingfile', 'drawingdoc.delete_drawingfile')
 
     def get(self, request, *args, **kwargs):
         form = self.form_class()
@@ -259,11 +353,12 @@ class DrawingUpdateView(PermissionRequiredMixin, View):
                     if os.path.isfile(file_url):
                         print(file_url)
                         os.remove(file_url)
-                    drawing_file.file_field=files[0]
+                    drawing_file.file_field = files[0]
                     drawing_file.save(update_fields=['file_field'])
                     return HttpResponseRedirect(reverse_lazy('project:drawing-document-info',
                                                              kwargs={"pk_p": kwargs["pk_p"], "pk": drawing.id}))
-                form.add_error('file_field', f'The file name"{files[0].name}" does not match the drawing being updated.')
+                form.add_error('file_field',
+                               f'The file name"{files[0].name}" does not match the drawing being updated.')
                 form.clean()
                 return render(request, self.template_name, {'form': form})
             for error in list_of_errors:
@@ -281,7 +376,7 @@ class HomeView(ListView):
         return render(request, self.template_name)
 
 
-class ProjectDeleteView(PermissionRequiredMixin, DeleteView):
+class ProjectDeleteView(CustomPermMixin, DeleteView):
     template_name = 'drawingdoc/generic_delete.html'
     model = Project
     pk_url_kwarg = "pk_p"
@@ -289,7 +384,7 @@ class ProjectDeleteView(PermissionRequiredMixin, DeleteView):
 
     def get(self, request, *args, **kwargs):
         project = get_object_or_404(Project, pk=kwargs['pk_p'])
-        file_url = os.path.join(BASE_DIR, 'media/uploads/'+str(project.abbreviation))
+        file_url = os.path.join(BASE_DIR, 'media/uploads/' + str(project.abbreviation))
 
         drawing_list = Drawing.objects.filter(project=project)
         for drawing in drawing_list:
@@ -300,3 +395,8 @@ class ProjectDeleteView(PermissionRequiredMixin, DeleteView):
         project.delete()
         return HttpResponseRedirect(reverse_lazy('project:project-list'))
 
+
+@permission_required('drawingdoc.view_drawingfile', login_url='/login/')
+def media_access(request, path):
+    response = FileResponse(open(MEDIA_ROOT+'/'+path[:-1], 'rb'))
+    return response

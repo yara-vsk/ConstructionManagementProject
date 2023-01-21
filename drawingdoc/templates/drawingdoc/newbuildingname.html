@@ -1,5 +1,5 @@
 {% extends 'drawingdoc/base.html' %}
-
+{% load crispy_forms_tags %}
 {% block heads %}
 <title>Nazwa budynku</title>
 {% endblock %}
@@ -7,7 +7,7 @@
 {% block content %}
 <form id="contact" action="" method="post">
     {% csrf_token %}
-    {{ form }}
+    {{ form|crispy }}
     <input type="submit" value="Submit">
 </form>
 

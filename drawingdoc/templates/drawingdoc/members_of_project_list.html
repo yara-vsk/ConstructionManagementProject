@@ -1,0 +1,39 @@
+{% extends 'drawingdoc/base.html' %}
+
+{% block heads %}
+<title>Members of project {{ project.name }} </title>
+{% endblock %}
+
+
+{% block content %}
+<h3>Members of project {{ project.name }}</h3>
+
+<h4><a href='{% url "project:members-add" project.id %}'>Add a new member</a></h4>
+<table border="1">
+	<thead>
+	  <tr>
+		  <th>First Name</th>
+		  <th>Last Name</th>
+		  <th>Status</th>
+		  <th>Action</th>
+	  </tr>
+	</thead>
+	<tbody>
+
+	{% for member in members_of_project %}
+	  <tr>
+		  <td>{{ member.user.first_name }}</td>
+		  <td>{{ member.user.last_name }}</td>
+		  <td>{{ member.user.status }}</td>
+		  <td><a href='{% url "project:members-delete" project.id member.id %}'>Delete</a></td>
+	  </tr>
+	  {% empty %}
+	  <tr>
+		<td colspan="5">no items</td>
+	  </tr>
+	{% endfor %}
+	</tbody>
+</table>
+
+
+{% endblock %}

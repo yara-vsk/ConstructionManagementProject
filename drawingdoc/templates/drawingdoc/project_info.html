@@ -8,9 +8,10 @@
 {% block content %}
 <br>
 <h3><b>{{project.name}}</b></h3>
-<h4><a href="drawing_documents/list/">Drawing documents list</a></h4>
-<h4><a href="drawing_documents/upload/">Upload drawings</a></h4>
-<h4><a href="new_building_name/">Create new building name</a></h4>
+<h4><a href='{% url "project:drawing-document-list" project.id %}'>Drawing documents list</a></h4>
+<h4><a href='{% url "project:drawing-document-upload" project.id %}'>Upload drawings</a></h4>
+<h4><a href='{% url "project:building-name-create" project.id %}'>Create new building name</a></h4>
+<h4><a href='{% url "project:members" project.id %}'>Members of project</a></h4>
 
 <table border="1">
 	<caption>Building name list</caption>

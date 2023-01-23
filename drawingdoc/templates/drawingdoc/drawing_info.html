@@ -11,17 +11,19 @@
 <table border="1">
 	<thead>
 	  <tr>
+		  <th>Drawing status</th>
 		  <th>Design stage</th>
 		  <th>Branch</th>
 		  <th>Building name</th>
-		  <th>Draw number</th>
+		  <th>Number of drawing</th>
 		  <th>Revision</th>
-		  <th>Date_drawing</th>
-		  <th>Draw title</th>
+		  <th>Drawing revision date</th>
+		  <th>Title of drawing</th>
 	  </tr>
 	</thead>
 	<tbody>
 	  <tr>
+		  <td>{{ dr_status.status }}</td>
 		  <td>{{ obj.design_stage }}</td>
 		  <td>{{ obj.branch }}</td>
 		  <td>{{ obj.building_name }}</td>
@@ -46,7 +48,28 @@
 	  </tr>
 	</tbody>
 </table>
+<br>
+<table border="0">
+	<tbody>
+	{% for activity in activities %}
+	{% if activity.comment %}
 
+	  <tr>
+		  <td>{{activity.date|date}}</td>
+		  <td>{{activity.date|time}}</td>
+		  <td>{{activity.comment}}</td>
+		  <td><td>{{activity.user.email}}</td></td>
+
+	  </tr>
+	{% endif %}
+
+	{% empty %}
+	  <tr>
+		<td colspan="5">no items</td>
+	  </tr>
+	{% endfor %}
+	</tbody>
+</table>
 
 
 {% endblock %}

@@ -82,3 +82,17 @@ class Drawing(models.Model):
 
     def __str__(self):
         return self.file
+
+
+class DrawingUser(models.Model):
+
+    class Status(models.TextChoices):
+        s1 = 'accepted', _('accepted')
+        s2 = 'to correct', _('to correct')
+        s3 = 'uploaded', _('uploaded')
+
+    drawing = models.ForeignKey(Drawing, on_delete=models.CASCADE)
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+    date = models.DateTimeField()
+    comment = models.TextField(max_length=1400, blank=True)
+    status = models.CharField(max_length=100, choices=Status.choices, default=Status.s3)

@@ -13,10 +13,10 @@ from ConstrManagementProject.settings import BASE_DIR, MEDIA_ROOT
 from .custommixins import CustomPermMixin
 from .form import BuildingNameForm, UploadDrawingForm, ProjectForm, DrawingsSearchForm, MembersOfProjectForm
 from django.http import HttpResponseRedirect, Http404, FileResponse
-from .models import DrawingFile, Drawing, BuildingName, Project, MemberOfProject
+from .models import DrawingFile, Drawing, BuildingName, Project, MemberOfProject, DrawingUser
 from .drawingsnamechecker import drawings_name_checker
 from .fileschecker import files_checker
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class ProjectListView(CustomPermMixin, View):
@@ -74,9 +74,9 @@ class BuildingNameDeleteView(CustomPermMixin, View):
         drawing_list = Drawing.objects.filter(building_name=building_name, project=project)
         for drawing in drawing_list:
             file_url = str(drawing.file.file_field.path)
-            drawing.file.delete()
             if os.path.isfile(file_url):
                 os.remove(file_url)
+            drawing.file.delete()
         building_name.delete()
         return HttpResponseRedirect(reverse_lazy('project:project-info', kwargs={"pk_p": self.kwargs["pk_p"]}))
 
@@ -230,6 +230,13 @@ class UploadDrawingView(CustomPermMixin, View):
                     )
                     drawing_file.save()
                     drawing.save()
+
+                    activity = DrawingUser(
+                        drawing = drawing,
+                        user = request.user,
+                        date = datetime.now(timezone.utc),
+                    )
+                    activity.save()
                 return HttpResponseRedirect(reverse_lazy('project:project-info', kwargs={"pk_p": kwargs["pk_p"]}))
             for error in list_of_errors:
                 form.add_error('file_field', error)
@@ -305,10 +312,12 @@ class DrawingInfoView(CustomPermMixin, View):
 
     def get(self, request, *args, **kwargs):
         try:
-            drawing_data = Drawing.objects.get(id=kwargs['pk'])
+            drawing = Drawing.objects.get(id=kwargs['pk'])
+            activities = DrawingUser.objects.filter(drawing=drawing).order_by('date').all()
+            drawing_status = DrawingUser.objects.filter(drawing=drawing).order_by('-date').first()
         except Drawing.DoesNotExist:
             raise Http404("Drawing does not exist")
-        return render(request, self.template_name, {'obj': drawing_data})
+        return render(request, self.template_name, {'obj': drawing,'activities':activities, 'dr_status':drawing_status})
 
 
 class DrawingDeleteView(CustomPermMixin, View):
@@ -351,10 +360,16 @@ class DrawingUpdateView(CustomPermMixin, View):
                     drawing_file = drawing.file
                     file_url = str(drawing_file.file_field.path)
                     if os.path.isfile(file_url):
-                        print(file_url)
                         os.remove(file_url)
                     drawing_file.file_field = files[0]
                     drawing_file.save(update_fields=['file_field'])
+
+                    activity = DrawingUser(
+                        drawing=drawing,
+                        user=request.user,
+                        date=datetime.now(timezone.utc),
+                    )
+                    activity.save()
                     return HttpResponseRedirect(reverse_lazy('project:drawing-document-info',
                                                              kwargs={"pk_p": kwargs["pk_p"], "pk": drawing.id}))
                 form.add_error('file_field',
@@ -398,5 +413,5 @@ class ProjectDeleteView(CustomPermMixin, DeleteView):
 
 @permission_required('drawingdoc.view_drawingfile', login_url='/login/')
 def media_access(request, path):
-    response = FileResponse(open(MEDIA_ROOT+'/'+path[:-1], 'rb'))
+    response = FileResponse(open(MEDIA_ROOT+'/'+path[:], 'rb'))
     return response

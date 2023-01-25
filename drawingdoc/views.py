@@ -7,6 +7,7 @@ from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.generic import CreateView, View, ListView, DeleteView, UpdateView
 
 from ConstrManagementProject.settings import BASE_DIR, MEDIA_ROOT
@@ -410,7 +411,7 @@ class ProjectDeleteView(CustomPermMixin, DeleteView):
         project.delete()
         return HttpResponseRedirect(reverse_lazy('project:project-list'))
 
-
+@xframe_options_sameorigin
 @permission_required('drawingdoc.view_drawingfile', login_url='/login/')
 def media_access(request, path):
     response = FileResponse(open(MEDIA_ROOT+'/'+path[:], 'rb'))

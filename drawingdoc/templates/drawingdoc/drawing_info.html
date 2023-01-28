@@ -1,7 +1,19 @@
 {% extends 'drawingdoc/base.html' %}
 {% load static %}
+{% load crispy_forms_tags %}
 {% block heads %}
 <title>List drawings</title>
+<style>
+	p {
+    display: block;
+    margin-block-start: auto;
+    margin-block-end: auto;
+    margin-inline-start: auto;
+    margin-inline-end: auto;
+    font-size:15px;
+    font-weight: bold;
+}
+</style>
 {% endblock %}
 
 
@@ -51,18 +63,35 @@
 <br>
 <iframe src="{{obj.file.file_field.url}}" width="1000" height="800" frameborder="1"></iframe>
 <br>
-<table border="0">
+<table border="0" >
 	<tbody>
 	{% for activity in activities %}
+
+	{% if activity.status %}
+
+	<tr>
+		<td>{{activity.date|date:"d M Y"}}</td>
+		<td>{{activity.date|time:"H:i"}}</td>
+		<td>{{activity.user.email}}</td>
+		<td><span style="color: red">Drawing {{activity.status}}</span></td>
+	</tr>
+
+	{% endif %}
+
 	{% if activity.comment %}
 
-	  <tr>
-		  <td>{{activity.date|date}}</td>
-		  <td>{{activity.date|time}}</td>
-		  <td>{{activity.comment}}</td>
-		  <td><td>{{activity.user.email}}</td></td>
+	<tr>
+		  <td>{{activity.date|date:"d M Y"}}</td>
+		  <td>{{activity.date|time:"H:i"}}</td>
+		  <td>{{activity.user.email}}</td>
+	</tr>
+	<tr>
+		<td></td>
+		<td></td>
+		<td></td>
+		<td>{{activity.comment|linebreaks}}</td>
+	</tr>
 
-	  </tr>
 	{% endif %}
 
 	{% empty %}
@@ -72,6 +101,11 @@
 	{% endfor %}
 	</tbody>
 </table>
-
+<form id="contact" action="" method="post">
+    {% csrf_token %}
+    {{ form|crispy }}
+	<br>
+    <input type="submit" value="Submit">
+</form>
 
 {% endblock %}

@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.forms import ModelForm
 from django.utils.translation import gettext_lazy as _
-from .models import Drawing, BuildingName, DrawingFile, Project, MemberOfProject
+from .models import Drawing, BuildingName, DrawingFile, Project, MemberOfProject, DrawingUser
 import re
 
 
@@ -91,7 +91,16 @@ class DrawingsSearchForm(forms.ModelForm):
         self.fields['building_name'].queryset = BuildingName.objects.filter(project=args[1]).order_by('name')
 
 
+class DrawingUserForm(forms.ModelForm):
 
+    class Meta:
+        model = DrawingUser
+        fields = ('comment','status')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['status'].label= 'Drawing status:'
+        self.fields['comment'].label = 'Add comment:'
 
 
 

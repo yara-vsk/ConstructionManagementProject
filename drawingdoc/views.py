@@ -12,7 +12,8 @@ from django.views.generic import CreateView, View, ListView, DeleteView, UpdateV
 
 from ConstrManagementProject.settings import BASE_DIR, MEDIA_ROOT
 from .custommixins import CustomPermMixin
-from .form import BuildingNameForm, UploadDrawingForm, ProjectForm, DrawingsSearchForm, MembersOfProjectForm
+from .form import BuildingNameForm, UploadDrawingForm, ProjectForm, DrawingsSearchForm, MembersOfProjectForm, \
+    DrawingUserForm
 from django.http import HttpResponseRedirect, Http404, FileResponse
 from .models import DrawingFile, Drawing, BuildingName, Project, MemberOfProject, DrawingUser
 from .drawingsnamechecker import drawings_name_checker
@@ -236,6 +237,7 @@ class UploadDrawingView(CustomPermMixin, View):
                         drawing = drawing,
                         user = request.user,
                         date = datetime.now(timezone.utc),
+                        status = DrawingUser.Status.s3,
                     )
                     activity.save()
                 return HttpResponseRedirect(reverse_lazy('project:project-info', kwargs={"pk_p": kwargs["pk_p"]}))
@@ -310,15 +312,35 @@ class DrawingsListView(CustomPermMixin, View):
 class DrawingInfoView(CustomPermMixin, View):
     template_name = 'drawingdoc/drawing_info.html'
     permission_required = 'drawingdoc.view_drawing'
+    form_class = DrawingUserForm
 
     def get(self, request, *args, **kwargs):
-        try:
-            drawing = Drawing.objects.get(id=kwargs['pk'])
-            activities = DrawingUser.objects.filter(drawing=drawing).order_by('date').all()
-            drawing_status = DrawingUser.objects.filter(drawing=drawing).order_by('-date').first()
-        except Drawing.DoesNotExist:
-            raise Http404("Drawing does not exist")
-        return render(request, self.template_name, {'obj': drawing,'activities':activities, 'dr_status':drawing_status})
+        form = self.form_class()
+        project = get_object_or_404(Project, pk=kwargs['pk_p'])
+        drawing = get_object_or_404(Drawing, pk=kwargs['pk'])
+        activities = DrawingUser.objects.filter(drawing=drawing).order_by('date').all()
+        drawing_status = DrawingUser.objects.filter(drawing=drawing).order_by('-date').first()
+        return render(request, self.template_name, {'obj': drawing,
+                                                    'activities':activities,
+                                                    'dr_status':drawing_status,
+                                                    'form':form
+                                                    })
+
+    def post(self, request, *args, **kwargs):
+        project = get_object_or_404(Project, pk=kwargs['pk_p'])
+        drawing = get_object_or_404(Drawing, pk=kwargs['pk'])
+        form = self.form_class(request.POST)
+        if form.is_valid():
+            activity = DrawingUser(
+                drawing=drawing,
+                user=request.user,
+                date=datetime.now(timezone.utc),
+                comment=form.cleaned_data['comment'],
+                status=form.cleaned_data['status']
+            )
+            activity.save()
+        return HttpResponseRedirect(reverse_lazy('project:drawing-document-info', kwargs={"pk_p": kwargs["pk_p"],
+                                                                                          "pk": kwargs["pk"]}))
 
 
 class DrawingDeleteView(CustomPermMixin, View):
@@ -334,6 +356,7 @@ class DrawingDeleteView(CustomPermMixin, View):
         except Drawing.DoesNotExist:
             raise Http404("Drawing does not exist")
         return HttpResponseRedirect(reverse_lazy('project:drawing-document-list', kwargs={"pk_p": kwargs["pk_p"]}))
+
 
 
 class DrawingUpdateView(CustomPermMixin, View):
@@ -369,6 +392,7 @@ class DrawingUpdateView(CustomPermMixin, View):
                         drawing=drawing,
                         user=request.user,
                         date=datetime.now(timezone.utc),
+                        status=DrawingUser.Status.s3
                     )
                     activity.save()
                     return HttpResponseRedirect(reverse_lazy('project:drawing-document-info',
@@ -410,6 +434,7 @@ class ProjectDeleteView(CustomPermMixin, DeleteView):
             shutil.rmtree(file_url)
         project.delete()
         return HttpResponseRedirect(reverse_lazy('project:project-list'))
+
 
 @xframe_options_sameorigin
 @permission_required('drawingdoc.view_drawingfile', login_url='/login/')

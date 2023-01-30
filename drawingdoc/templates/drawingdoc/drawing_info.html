@@ -3,23 +3,11 @@
 {% load crispy_forms_tags %}
 {% block heads %}
 <title>List drawings</title>
-<style>
-	p {
-    display: block;
-    margin-block-start: auto;
-    margin-block-end: auto;
-    margin-inline-start: auto;
-    margin-inline-end: auto;
-    font-size:15px;
-    font-weight: bold;
-}
-</style>
+<link rel="stylesheet" href="{% static 'drawingdoc/css/drawing_info_view.css'%}">
 {% endblock %}
-
 
 {% block content %}
 <h3>Drawing {{ obj.file.file_name }}</h3>
-
 <table border="1">
 	<thead>
 	  <tr>

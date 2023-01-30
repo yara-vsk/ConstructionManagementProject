@@ -20,6 +20,8 @@ from .drawingsnamechecker import drawings_name_checker
 from .fileschecker import files_checker
 from datetime import datetime, timezone
 
+from .utils import menu
+
 
 class ProjectListView(CustomPermMixin, View):
     template_name = 'drawingdoc/projects_list.html'
@@ -28,7 +30,9 @@ class ProjectListView(CustomPermMixin, View):
     def get(self, request, *args, **kwargs):
         user = request.user
         user_projects = MemberOfProject.objects.filter(user=user).all()
-        return render(request, self.template_name, {'object_list': user_projects})
+        return render(request, self.template_name, {'object_list': user_projects,
+                                                    'menu': menu,
+                                                    })
 
 
 class ProjectInfoView(CustomPermMixin, View):
@@ -38,7 +42,10 @@ class ProjectInfoView(CustomPermMixin, View):
     def get(self, request, *args, **kwargs):
         project = get_object_or_404(Project, pk=kwargs['pk_p'])
         building_names = BuildingName.objects.filter(project=project.id).all()
-        return render(request, self.template_name, {'project': project, 'building_list': building_names})
+        return render(request, self.template_name, {'project': project,
+                                                    'building_list': building_names,
+                                                    'menu': menu,
+                                                    })
 
 
 class NewBuildingName(CustomPermMixin, View):
@@ -48,7 +55,11 @@ class NewBuildingName(CustomPermMixin, View):
 
     def get(self, request, *args, **kwargs):
         form = self.form_class()
-        return render(request, self.template_name, {'form': form})
+        project = get_object_or_404(Project, pk=kwargs['pk_p'])
+        return render(request, self.template_name, {'form': form,
+                                                    'menu': menu,
+                                                    'project': project
+                                                    })
 
     def post(self, request, *args, **kwargs):
         try:
@@ -93,6 +104,12 @@ class BuildingNameUpdateView(CustomPermMixin, UpdateView):
     def get_success_url(self):
         return reverse_lazy('project:project-info', kwargs={"pk_p": self.kwargs["pk_p"]})
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['menu']=menu
+        context['project'] = get_object_or_404(Project, pk=self.kwargs["pk_p"])
+        return context
+
 
 class NewProjectView(CustomPermMixin, View):
     form_class = ProjectForm
@@ -101,7 +118,8 @@ class NewProjectView(CustomPermMixin, View):
 
     def get(self, request, *args, **kwargs):
         form = self.form_class()
-        return render(request, self.template_name, {'form': form})
+        return render(request, self.template_name, {'form': form,
+                                                    'menu': menu})
 
     def post(self, request, *args, **kwargs):
         form = self.form_class(request.POST)
@@ -139,7 +157,10 @@ class AddUserToProjectView(CustomPermMixin, View):
     def get(self, request, *args, **kwargs):
         project = get_object_or_404(Project, pk=kwargs['pk_p'])
         form = self.form_class()
-        return render(request, self.template_name, {'form': form})
+        return render(request, self.template_name, {'form': form,
+                                                    'menu': menu,
+                                                    'project': project,
+                                                    })
 
     def post(self, request, *args, **kwargs):
         project = get_object_or_404(Project, pk=kwargs['pk_p'])
@@ -173,7 +194,10 @@ class MemberOfProjectListView(CustomPermMixin, View):
     def get(self, request, *args, **kwargs):
         project = get_object_or_404(Project, pk=kwargs['pk_p'])
         members_of_project = MemberOfProject.objects.filter(project=project)
-        return render(request, self.template_name, context={'members_of_project':members_of_project, 'project':project})
+        return render(request, self.template_name, context={'members_of_project':members_of_project,
+                                                            'project':project,
+                                                            'menu':menu,
+                                                            })
 
 
 class MemberOfProjectDeleteView(CustomPermMixin, View):
@@ -201,7 +225,10 @@ class UploadDrawingView(CustomPermMixin, View):
 
     def get(self, request, *args, **kwargs):
         form = self.form_class()
-        return render(request, self.template_name, {'form': form})
+        project = get_object_or_404(Project, pk=kwargs['pk_p'])
+        return render(request, self.template_name, {'form': form,
+                                                    'menu':menu,
+                                                    'project': project})
 
     def post(self, request, *args, **kwargs):
         try:
@@ -305,7 +332,9 @@ class DrawingsListView(CustomPermMixin, View):
                       {
                           'form': form,
                           'object_dict': object_dict,
-                          'revision_list': revision_list
+                          'revision_list': revision_list,
+                          'menu': menu,
+                          'project': project
                       })
 
 
@@ -321,9 +350,11 @@ class DrawingInfoView(CustomPermMixin, View):
         activities = DrawingUser.objects.filter(drawing=drawing).order_by('date').all()
         drawing_status = DrawingUser.objects.filter(drawing=drawing).order_by('-date').first()
         return render(request, self.template_name, {'obj': drawing,
-                                                    'activities':activities,
-                                                    'dr_status':drawing_status,
-                                                    'form':form
+                                                    'activities': activities,
+                                                    'dr_status': drawing_status,
+                                                    'form': form,
+                                                    'menu': menu,
+                                                    'project': project
                                                     })
 
     def post(self, request, *args, **kwargs):
@@ -367,7 +398,11 @@ class DrawingUpdateView(CustomPermMixin, View):
 
     def get(self, request, *args, **kwargs):
         form = self.form_class()
-        return render(request, self.template_name, {'form': form})
+        project = get_object_or_404(Project, pk=kwargs['pk_p'])
+        return render(request, self.template_name, {'form': form,
+                                                    'menu': menu,
+                                                    'project': project
+                                                    })
 
     def post(self, request, *args, **kwargs):
         form = self.form_class(request.POST, request.FILES)
@@ -413,7 +448,7 @@ class HomeView(ListView):
     template_name = 'drawingdoc/home.html'
 
     def get(self, request, *args, **kwargs):
-        return render(request, self.template_name)
+        return render(request, self.template_name,{'menu':menu})
 
 
 class ProjectDeleteView(CustomPermMixin, DeleteView):

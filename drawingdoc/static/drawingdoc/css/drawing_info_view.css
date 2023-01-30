@@ -1,0 +1,9 @@
+p {
+    display: block;
+    margin-block-start: auto;
+    margin-block-end: auto;
+    margin-inline-start: auto;
+    margin-inline-end: auto;
+    font-size:15px;
+    font-weight: bold;
+}

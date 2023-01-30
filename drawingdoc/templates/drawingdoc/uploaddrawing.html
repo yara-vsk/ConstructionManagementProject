@@ -1,4 +1,5 @@
 {% extends 'drawingdoc/base.html' %}
+{% load crispy_forms_tags %}
 
 {% block heads %}
 <title>Upload Drawing</title>
@@ -7,7 +8,7 @@
 {% block content %}
 <form method="POST" enctype="multipart/form-data">
       {% csrf_token %}
-      {{ form }}
+      {{ form|crispy}}
 
       <button type="submit">Upload</button>
 </form>

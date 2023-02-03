@@ -14,7 +14,7 @@ from ConstrManagementProject.settings import BASE_DIR, MEDIA_ROOT
 from .custommixins import CustomPermMixin
 from .form import BuildingNameForm, UploadDrawingForm, ProjectForm, DrawingsSearchForm, MembersOfProjectForm, \
     DrawingUserForm
-from django.http import HttpResponseRedirect, Http404, FileResponse
+from django.http import HttpResponseRedirect, Http404, FileResponse, HttpResponse
 from .models import DrawingFile, Drawing, BuildingName, Project, MemberOfProject, DrawingUser
 from .drawingsnamechecker import drawings_name_checker
 from .fileschecker import files_checker
@@ -207,7 +207,9 @@ class MemberOfProjectDeleteView(CustomPermMixin, View):
     def get(self, request, *args, **kwargs):
         project = get_object_or_404(Project, pk=kwargs['pk_p'])
         members_of_project = get_object_or_404(MemberOfProject, pk=kwargs['pk_m'])
-        user = request.user
+        user = members_of_project.user
+        if user == project.creator:
+            return HttpResponse("You can't delete creator of project", status=403)
         permission = Permission.objects.get(
             codename='project_' + str(project.id),
             content_type=ContentType.objects.get_for_model(Project),
@@ -215,6 +217,8 @@ class MemberOfProjectDeleteView(CustomPermMixin, View):
         members_of_project.delete()
         user.user_permissions.remove(permission)
         user.save()
+        if request.user == user:
+            return redirect('/')
         return HttpResponseRedirect(reverse_lazy('project:members', kwargs={"pk_p": kwargs["pk_p"]}))
 
 
@@ -459,6 +463,9 @@ class ProjectDeleteView(CustomPermMixin, DeleteView):
 
     def get(self, request, *args, **kwargs):
         project = get_object_or_404(Project, pk=kwargs['pk_p'])
+
+        if request.user != project.creator:
+            return HttpResponse("You are not a creator of project, so you can't delete it.", status=403)
         file_url = os.path.join(BASE_DIR, 'media/uploads/' + str(project.abbreviation))
 
         drawing_list = Drawing.objects.filter(project=project)

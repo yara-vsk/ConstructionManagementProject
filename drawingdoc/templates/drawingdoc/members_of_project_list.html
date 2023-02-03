@@ -6,8 +6,6 @@
 
 
 {% block content %}
-<h3>Members of project {{ project.name }}</h3>
-
 <h4><a href='{% url "project:members-add" project.id %}'>Add a new member</a></h4>
 <table border="1">
 	<thead>

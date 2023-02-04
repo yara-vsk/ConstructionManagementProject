@@ -42,9 +42,44 @@ class ProjectInfoView(CustomPermMixin, View):
     def get(self, request, *args, **kwargs):
         project = get_object_or_404(Project, pk=kwargs['pk_p'])
         building_names = BuildingName.objects.filter(project=project.id).all()
+        uploaded_drawings = DrawingUser.objects.raw('''SELECT D.id, F.file_name, A.date, U.email 
+                                                            FROM drawingdoc_drawing AS D
+                                                            JOIN 
+                                                            (SELECT * FROM 
+                                                            (SELECT * FROM drawingdoc_drawinguser As AAA ORDER BY AAA.date DESC)
+                                                            AS AA GROUP BY AA.drawing_id)
+                                                            AS A
+                                                            On D.id = A.drawing_id
+                                                            JOIN users_customuser AS U
+                                                             On U.id = A.user_id
+                                                            JOIN drawingdoc_drawingfile AS F
+                                                             On F.id = D.file_id
+                                                             WHERE A.status = 'uploaded'
+                                                             GROUP BY D.id
+                                                             ORDER BY A.date DESC
+                                                            ''')
+        drawings_to_correct = DrawingUser.objects.raw('''SELECT D.id, F.file_name, A.date, U.email 
+                                                            FROM drawingdoc_drawing AS D
+                                                            JOIN 
+                                                            (SELECT * FROM 
+                                                            (SELECT * FROM drawingdoc_drawinguser As AAA ORDER BY AAA.date DESC)
+                                                            AS AA GROUP BY AA.drawing_id)
+                                                            AS A
+                                                            On D.id = A.drawing_id
+                                                            JOIN users_customuser AS U
+                                                             On U.id = A.user_id
+                                                            JOIN drawingdoc_drawingfile AS F
+                                                             On F.id = D.file_id
+                                                             WHERE A.status = 'to correct'
+                                                             GROUP BY D.id
+                                                             ORDER BY A.date DESC
+                                                            ''')
+
         return render(request, self.template_name, {'project': project,
                                                     'building_list': building_names,
                                                     'menu': menu,
+                                                    'uploaded_drawings': uploaded_drawings,
+                                                    'drawings_to_correct': drawings_to_correct,
                                                     })
 
 

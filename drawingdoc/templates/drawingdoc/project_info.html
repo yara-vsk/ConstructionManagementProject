@@ -32,6 +32,60 @@
 	</tbody>
 </table>
 <br>
+
+<table border="1">
+	<caption>Uploaded drawings</caption>
+	<thead>
+	  <tr>
+		  <th>Drawing name</th>
+		  <th>Date upload</th>
+		  <th>User email</th>
+	  </tr>
+	</thead>
+	<tbody>
+
+	{% for draw_user in uploaded_drawings %}
+	  <tr>
+		  <td><a href='{% url "project:drawing-document-info" project.id draw_user.id %}'>{{draw_user.file_name}}</a></td>
+		  <td>{{ draw_user.date|date:"d/m/Y"}}</td>
+		  <td>{{ draw_user.email }}</td>
+	  </tr>
+	  {% empty %}
+	  <tr>
+		<td colspan="5">no items</td>
+	  </tr>
+	{% endfor %}
+	</tbody>
+</table>
+<br>
+
+<table border="1">
+	<caption>Drawings to correct</caption>
+	<thead>
+	  <tr>
+		  <th>Drawing name</th>
+		  <th>Verification date</th>
+		  <th>User email</th>
+	  </tr>
+	</thead>
+	<tbody>
+
+	{% for draw_user in drawings_to_correct %}
+	  <tr>
+		  <td><a href='{% url "project:drawing-document-info" project.id draw_user.id %}'>{{draw_user.file_name}}</a></td>
+		  <td>{{ draw_user.date |date:"d/m/Y"}}</td>
+		  <td>{{ draw_user.email }}</td>
+	  </tr>
+	  {% empty %}
+	  <tr>
+		<td colspan="5">no items</td>
+	  </tr>
+	{% endfor %}
+	</tbody>
+</table>
+<br>
+<br>
+
 <h4><a href='{% url "project:project-delete" project.id %}'>Delete project</a></h4>
 
 {% endblock %}

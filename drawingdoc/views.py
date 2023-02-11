@@ -516,5 +516,9 @@ class ProjectDeleteView(CustomPermMixin, DeleteView):
 @xframe_options_sameorigin
 @permission_required('drawingdoc.view_drawingfile', login_url='/login/')
 def media_access(request, path):
+    drawing = Drawing.objects.filter(file__file_field__contains=path).first()
+    if drawing:
+        if not request.user.has_perms(('drawingdoc.project_' + str(drawing.project.id),)):
+            raise Http404("Does not exist")
     response = FileResponse(open(MEDIA_ROOT+'/'+path[:], 'rb'))
     return response

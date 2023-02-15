@@ -1,4 +1,4 @@
-from django.urls import path, reverse_lazy
+from django.urls import path, reverse_lazy, include
 from django.views.generic import RedirectView
 
 from .views import NewBuildingName, UploadDrawingView, NewProjectView, DrawingsListView, DrawingInfoView, \
@@ -24,4 +24,5 @@ urlpatterns = [
     path('<int:pk_p>/drawing_documents/<int:pk>/', DrawingInfoView.as_view(),name='drawing-document-info'),
     path('<int:pk_p>/drawing_documents/<int:pk>/delete/', DrawingDeleteView.as_view()),
     path('<int:pk_p>/drawing_documents/<int:pk>/update/', DrawingUpdateView.as_view()),
+    path('<int:pk_p>/schedule/', include('schedule.urls')),
 ]

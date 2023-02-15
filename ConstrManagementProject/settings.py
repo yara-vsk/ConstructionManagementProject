@@ -42,7 +42,9 @@ INSTALLED_APPS = [
     'drawingdoc',
     'users',
     'crispy_forms',
-    'captcha'
+    'captcha',
+    'schedule',
+    'rest_framework',
 ]
 
 AUTH_USER_MODEL = 'users.CustomUser'

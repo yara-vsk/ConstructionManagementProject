@@ -12,16 +12,25 @@ class ScheduleSerializer(serializers.Serializer):
     Finish = serializers.DateField(format="%d-%m-%Y", input_formats=['%a %m/%d/%y', 'iso-8601'])
     Predecessors = serializers.CharField(max_length=100)
     project = serializers.IntegerField()
+    outline_level = serializers.IntegerField()
 
     def create(self, validated_data):
         return Schedule.objects.create(
             old_id=validated_data['ID'],
-            name = validated_data['Name'],
-            date_start = validated_data['Start'],
-            date_finish = validated_data['Finish'],
-            predecessors = validated_data['Predecessors'],
-            project = Project.objects.get(id=validated_data['project'])
+            name=validated_data['Name'],
+            date_start=validated_data['Start'],
+            date_finish=validated_data['Finish'],
+            predecessors=validated_data['Predecessors'],
+            project=Project.objects.get(id=validated_data['project']),
+            outline_level=validated_data['outline_level'],
         )
+
+    def validate_outline_level(self,value):
+        try:
+            int_value=int(value)
+        except KeyError:
+            raise serializers.ValidationError("Otline level must be integer type.")
+        return int_value
 
 
 class ScheduleExportSerializer(serializers.Serializer):

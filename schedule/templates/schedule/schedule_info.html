@@ -1,0 +1,20 @@
+{% extends 'drawingdoc/base.html' %}
+
+{% block heads %}
+<title>Schedule of project</title>
+{% endblock %}
+
+{% block content %}
+
+<table border="1">
+	<tbody>
+	  <tr>
+		  <td><a href='{% url "project:schedule-upload" project.id %}'>Upload</a></td>
+		  <td><a href='{% url "project:schedule-delete" project.id %}'>Delete</a></td>
+
+	  </tr>
+	</tbody>
+</table>
+
+
+{% endblock %}

@@ -1,3 +1,5 @@
+import re
+
 from rest_framework import serializers
 
 from drawingdoc.models import Project
@@ -32,6 +34,30 @@ class ScheduleSerializer(serializers.Serializer):
             raise serializers.ValidationError("Otline level must be integer type.")
         return int_value
 
+    def validate_Predecessors(self,value):
+        try:
+            new_value= 'Task ' + str(int(value))
+        except ValueError:
+            if value == 'nan':
+                return ''
+            values=[]
+            for value_part in value.split(';'):
+                try:
+                    new_value_part = 'Task ' + str(int(value_part))
+                    values.append(new_value_part)
+                except ValueError:
+                    match = re.search(r'[A-Za-z]', value_part)
+                    if match:
+                        try:
+                            new_value_part = 'Task ' + str(int(value_part[:match.start()]))
+                            values.append(str(new_value_part))
+                        except ValueError:
+                            raise serializers.ValidationError("The 'predecessor' data format is not appropriate.")
+                    else:
+                        raise serializers.ValidationError("The 'predecessor' data format is not appropriate.")
+            new_value = values[0] if len(values) == 1 else ", ".join(values)
+        return new_value
+
 
 class ScheduleExportSerializer(serializers.Serializer):
 
@@ -39,5 +65,5 @@ class ScheduleExportSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=250,read_only=True)
     start = serializers.DateField(read_only=True)
     end = serializers.DateField(read_only=True)
-    progress = serializers.IntegerField(default=0, read_only=True)
-    dependencies = serializers.CharField(default='Task 1',max_length=100, read_only=True)
+    progress = serializers.IntegerField(read_only=True)
+    dependencies = serializers.CharField(default="Task 1", max_length=100, read_only=True)

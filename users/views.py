@@ -23,7 +23,7 @@ def activate(request, uidb64, token):
     User = get_user_model()
     try:
         uid = force_str(urlsafe_base64_decode(uidb64))
-        user = User.objects.get(pk=uid)
+        user = User.objects.get(pk=int(uid))
     except:
         user =None
 
@@ -51,7 +51,6 @@ def activate_email(request, user, to_email):
     email = EmailMessage(mail_subject, message, to=[to_email])
     if email.send():
         pass
-        #print("email send")
 
 
 class RegisterUserView(UserAuthenticatingMixin, View):

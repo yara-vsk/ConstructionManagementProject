@@ -8,7 +8,7 @@ from django.shortcuts import render, get_object_or_404
 # Create your views here.
 from django.urls import reverse_lazy
 from django.views import View
-from django.db.models import CharField, Value as V, DateTimeField, DateField
+from django.db.models import CharField, Value as V, DateTimeField, DateField, F
 
 from drawingdoc.custommixins import CustomPermMixin
 from drawingdoc.models import Project
@@ -49,6 +49,12 @@ class UploadCsvView(CustomPermMixin, View):
             if serializer.is_valid():
                 serializer.save()
                 return HttpResponseRedirect(reverse_lazy('project:schedule-info', kwargs={"pk_p": kwargs["pk_p"]}))
+            else:
+                for error_dict in serializer.errors:
+                    if error_dict:
+                        for error in error_dict.values():
+                            form.add_error('file_csv', error)
+                form.clean()
         return render(request, self.template_name, {'form': form,
                                                     'menu': menu,
                                                     'project': project})
@@ -60,12 +66,14 @@ class ScheduleGantView(CustomPermMixin, View):
 
     def get(self, request, *args, **kwargs):
         project = get_object_or_404(Project, pk=kwargs['pk_p'])
-        tasks = Schedule.objects.annotate(start=Trunc('date_start','day',output_field=DateField()),
+        tasks = Schedule.objects.filter(project=project).annotate(start=Trunc('date_start','day',output_field=DateField()),
                                           end=Trunc('date_finish','day',output_field=DateField()),
-                                          _id=Concat(V('ask '), 'id',output_field=CharField()),
-                                          ).values('start', 'end', '_id', 'name'
-                                                   ).annotate(id=Concat(V('T'),"_id",output_field=CharField())
-                                                              ).values('start', 'end', 'id', 'name')
+                                          _id=Concat(V('ask '), 'old_id',output_field=CharField()),
+                                          ).values('start', 'end', '_id', 'name','progress', 'predecessors'
+                                                   ).annotate(id=Concat(V('T'),"_id",output_field=CharField()),
+                                                              dependencies=F('predecessors')
+                                                              ).values('start', 'end', 'id', 'name',
+                                                                       'progress','dependencies')
         serializer = ScheduleExportSerializer(tasks, many=True)
         return render(request, self.template_name, {'menu': menu,
                                                     'project': project,

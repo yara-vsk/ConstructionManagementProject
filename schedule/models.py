@@ -9,7 +9,8 @@ class Schedule(models.Model):
     date_finish = models.DateField()
     predecessors = models.CharField(max_length=100, blank=True)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
-    outline_level=models.IntegerField()
+    outline_level = models.IntegerField()
+    progress = models.IntegerField(default=0)
 
     def __str__(self):
         return self.name
